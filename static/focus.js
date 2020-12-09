@@ -4,38 +4,113 @@ const API = {
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
+//Возвращает
+//<!DOCTYPE html>
+//<html lang="en">
+//    <head>
+//       <meta charset="utf-8">
+//            <title>Error</title>
+//    </head>
+//    <body>
+//        <pre>Cannot GET /undefined</pre>
+//    </body>
+//</html>
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
+async function run() {
+    // await sendRequest(API.organizationList, (orgOgrns) => {
+    //     const ogrns = orgOgrns.join(",");
+    //     sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
+    //         const orgsMap = reqsToMap(requisites);
+    //         sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
+    //             addInOrgsMap(orgsMap, analytics, "analytics");
+    //             sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
+    //                 addInOrgsMap(orgsMap, buh, "buhForms");
+    //                 render(orgsMap, orgOgrns);
+    //             });
+    //         });
+    //     });
+    // })
+
+
+
+
+    // await sendRequest(API.organizationList)
+    //     .then(orgOgrns => {
+    //             _orgOgrns = orgOgrns
+    //             ogrns = orgOgrns.join(",");
+    //             return sendRequest(`${API.orgReqs}?ogrn=${ogrns}`)
+    //         }
+    //     )
+    //     .then(requisites => {
+    //         orgsMap = reqsToMap(requisites);
+    //         return sendRequest(`${API.analytics}?ogrn=${ogrns}`)
+    //     })
+    //     .then(analytics => {
+    //         addInOrgsMap(orgsMap, analytics, "analytics");
+    //         return sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    //     })
+    //     .then(buh => {
+    //         addInOrgsMap(orgsMap, buh, "buhForms");
+    //         render(orgsMap, _orgOgrns);
+    //     })
+    //     .catch((error) => {
+    //         alert(error);
+    //     })
+
+
+
+
+
+   const orgOgrns = await sendRequest(API.organizationList)
         const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+    Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+        ])
+        .then(([requisites, analytics,buh])=>{
+            const  orgsMap = reqsToMap(requisites)
+        addInOrgsMap(orgsMap, analytics, "analytics");
+        addInOrgsMap(orgsMap, buh, "buhForms");
+        render(orgsMap, orgOgrns);
+    })
+    .catch(error=>{alert(error)})
+
+
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
+async function sendRequest(url) {
+    // const xhr = new XMLHttpRequest();
+    // xhr.open("GET", url, true);
+    //
+    // xhr.onreadystatechange = function () {
+    //     if (xhr.readyState === XMLHttpRequest.DONE) {
+    //         if (xhr.status === 200) {
+    //             callback(JSON.parse(xhr.response));
+    //         }
+    //     }
+    // };
+    //
+    // xhr.send();
+    let response = await fetch(url);
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+    if (response.ok) {
+        let json = await response.json();
+        return json;
+    } else {
+        throw new Error('<!DOCTYPE html>\n' +
+            '<html lang="en">\n' +
+            '<head>\n' +
+            '<meta charset="utf-8">\n' +
+            '<title>Error</title>\n' +
+            '</head>\n' +
+            '<body>\n' +
+            '<pre>Cannot GET /undefined</pre>\n' +
+            '</body>\n' +
+            '</html>\n' + "Ошибка HTTP: " + response.status)
+    }
 }
 
 function reqsToMap(requisites) {
@@ -86,7 +161,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

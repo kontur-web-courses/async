@@ -5,38 +5,31 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
+async function sendRequest(url) {
+    return fetch(url).then(response => {
+        if (response.status === 200)
+            return response.json();
+        throw Error(`error fetching url ${url} with response code ${response.status.toString()}`);
     });
 }
 
-run();
+async function run() {
+    let organizations = await sendRequest(API.organizationList);
+    let organizationsStr = organizations.join(',');
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+    Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${organizationsStr}`),
+        sendRequest(`${API.analytics}?ogrn=${organizationsStr}`),
+        sendRequest(`${API.buhForms}?ogrn=${organizationsStr}`)
+    ]).then(([requisites, analytics, buhForms]) => {
+        const orgsMap = reqsToMap(requisites);
+        addInOrgsMap(orgsMap, analytics, "analytics");
+        addInOrgsMap(orgsMap, buhForms, "buhForms");
+        render(orgsMap, organizations);
+    }).catch((error) => alert(error));
 }
+
+run();
 
 function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {
@@ -86,7 +79,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

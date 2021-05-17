@@ -105,10 +105,10 @@ function formatMoney(money) {
     const rounded = money.toFixed(0);
     const numLen = rounded.length;
     for (let i = numLen - 3; i > 0; i -= 3) {
-        formatted = `${formatted.slice(0, i)} ${formatted.slice(i)}`;
+        formatted = `${formatted.slice(0, i)}${formatted.slice(i)}`;
     }
 
-    return `${formatted} ₽`;
+    return `${formatted}₽`;
 }
 
 function createAddress(address) {

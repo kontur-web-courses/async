@@ -1,43 +1,42 @@
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analytics",
+    analytics: "/api3/analitics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    const orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    const orgsMap = reqsToMap(requisites);
+    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+async function sendRequest(url) {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+        console.log(`Code: ${resp.status} ${resp.statusText}`);
+        return Promise.reject();
+    }
+    return resp.json()
 }
 
+
+function makeRequest(method, url) {
+    return new Promise(function (resolve, reject) {
+        let xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+
+        xhr.send();
+    });
+}
 function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {
         acc[item.ogrn] = item;
@@ -86,7 +85,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

@@ -19,23 +19,25 @@ async function run() {
 
 run();
 
-function sendRequest(url) {
-    return new Promise((resolve, reject) => {
+async function sendRequest(url) {
 
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", url, true);
+    const resp = await fetch(url);
+    return await resp.json();
 
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-                    if (xhr.status === 200) {
-                        resolve(JSON.parse(xhr.response));
-                    }
-                }
-            };
-
-            xhr.send();
-        }
-    )
+    // return new Promise((resolve, reject) => {
+    //         const xhr = new XMLHttpRequest();
+    //         xhr.open("GET", url, true);
+    //
+    //         xhr.onreadystatechange = function () {
+    //             if (xhr.readyState === XMLHttpRequest.DONE) {
+    //                 if (xhr.status === 200) {
+    //                     resolve(JSON.parse(xhr.response));
+    //                 }
+    //             }
+    //         };
+    //         xhr.send();
+    //     }
+    // )
 }
 
 function reqsToMap(requisites) {

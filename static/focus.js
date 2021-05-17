@@ -1,42 +1,29 @@
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analytics",
+    analytics: "/api3/analitics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    let orgOgrns = await sendRequest(API.organizationList);
+    let ogrns = orgOgrns.join(",");
+    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    let orgsMap = reqsToMap(requisites);
+    addInOrgsMap(orgsMap, await sendRequest(`${API.analytics}?ogrn=${ogrns}`),"analytics");
+    addInOrgsMap(orgsMap, await sendRequest(`${API.buhForms}?ogrn=${ogrns}`), "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
 
-function sendRequest(url, callback) {
-
-    return new Promise(function (resolve, reject) {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    callback(JSON.parse(xhr.response));
-                }
-            }
-        };
-        xhr.send();
-    });
+function sendRequest(url) {
+    return fetch(url).then(i => {
+        console.log(i, i.status === 404);
+        if (i.status === 404)
+            return new Error('Jopa');
+        return i.json();
+    }).catch(i => console.log(i));
 }
 
 function sendRequest2(url, callback) {

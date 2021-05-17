@@ -19,11 +19,13 @@ run();
 
 function sendRequest(url) {
     return fetch(url).then(i => {
-        console.log(i, i.status === 404);
-        if (i.status === 404)
-            return new Error('Jopa');
+        if (i.status === 404) {
+            var error = new Error(this.statusText);
+            error.code = this.status;
+            throw error;
+        }
         return i.json();
-    }).catch(i => console.log(i));
+    });
 }
 
 function sendRequest2(url, callback) {

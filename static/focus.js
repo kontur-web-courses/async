@@ -2,7 +2,7 @@
 
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analitics",
+    analytics: "/api3/analytics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
@@ -10,14 +10,14 @@ const API = {
 async function run() {
     let orgOgrns = await sendRequest(API.organizationList);
     const ogrns = orgOgrns.join(",");
-    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
-    const orgsMap = reqsToMap(requisites);
+    let orgsMap = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`)
+        .then(requisites => reqsToMap(requisites));
     let a = sendRequest(`${API.analytics}?ogrn=${ogrns}`)
         .then(analytics => addInOrgsMap(orgsMap, analytics, "analytics"));
     let b = sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
         .then(buh => addInOrgsMap(orgsMap, buh, "buhForms"));
+    await Promise.all([a, b]);
     render(orgsMap, orgOgrns);
-    return Promise.all([a, b]);
 }
 
 run().catch(e => alert(e));

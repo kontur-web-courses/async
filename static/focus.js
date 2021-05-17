@@ -1,6 +1,8 @@
+
+
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analytics",
+    analytics: "/api3/analitics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
@@ -10,17 +12,22 @@ async function run() {
     const ogrns = orgOgrns.join(",");
     let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
     const orgsMap = reqsToMap(requisites);
-    let analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
-    addInOrgsMap(orgsMap, analytics, "analytics");
-    let buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
-    addInOrgsMap(orgsMap, buh, "buhForms");
+    let a = sendRequest(`${API.analytics}?ogrn=${ogrns}`)
+        .then(analytics => addInOrgsMap(orgsMap, analytics, "analytics"));
+    let b = sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+        .then(buh => addInOrgsMap(orgsMap, buh, "buhForms"));
     render(orgsMap, orgOgrns);
+    return Promise.all([a, b]);
 }
 
-await run();
-
+run().catch(e => alert(e));
 function sendRequest(url) {
-    return fetch(url).then(response => response.json());
+    return fetch(url)
+        .then(response => {
+            if (response.ok)
+                return response.json();
+            throw new Error(`${response.status}`);
+        });
 }
 
 function reqsToMap(requisites) {
@@ -71,7 +78,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

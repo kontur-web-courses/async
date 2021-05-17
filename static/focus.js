@@ -5,37 +5,37 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
+async function run() {
+    try {
+        const orgOgrns = await sendRequest(API.organizationList);
         const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+        const requisitesPromise = sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+        const analyticsPromise = sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+        const buhPromise = sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+        let [requisites, analytics, buh] = await Promise.all(
+            [requisitesPromise, analyticsPromise, buhPromise]
+        );
+        const orgsMap = reqsToMap(requisites);
+        addInOrgsMap(orgsMap, analytics, "analytics");
+        addInOrgsMap(orgsMap, buh, "buhForms");
+        render(orgsMap, orgOgrns);
+    }
+    catch (e) {
+        console.log(e);
+    }
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
+async function sendRequest(url) {
+    return fetch(url).then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            alert(`${response.statusCode} ${response.status}`);
+            return Promise.reject();
         }
-    };
-
-    xhr.send();
+    }).then(data => data);
 }
 
 function reqsToMap(requisites) {
@@ -86,7 +86,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

@@ -6,14 +6,15 @@ const API = {
 };
 
 async function run() {
-    try{
+    try {
+
         const orgOgrns = await sendRequest(API.organizationList);
         const ogrns = orgOgrns.join(",");
-        const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`)
+        const [requisites, analytics, buh] = await Promise.all([sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+            sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+            sendRequest(`${API.buhForms}?ogrn=${ogrns}`)])
         const orgsMap = reqsToMap(requisites);
-        const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`)
         addInOrgsMap(orgsMap, analytics, "analytics");
-        const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
         addInOrgsMap(orgsMap, buh, "buhForms");
         render(orgsMap, orgOgrns);
     } catch {
@@ -81,7 +82,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

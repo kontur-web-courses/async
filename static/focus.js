@@ -19,11 +19,11 @@ async function run() {
 
 run();
 
-function sendRequest(url, callback){
-    let promise = fetch(url)
-        .catch(e => console.log(e))
-        .then(response => response.status === 200 ? response.json() : null);
-    return promise;
+async function sendRequest(url){
+    let response = await fetch(url);
+    if (response.ok)
+        return response.json();
+    alert(response.status);
 }
 
 

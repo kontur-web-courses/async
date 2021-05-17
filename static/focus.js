@@ -11,7 +11,7 @@ async function run() {
         const ogrns = orgOgrns.join(",");
         const [requisites, analytics, buh] = await Promise.all([
             sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
-            sendRequest(`${API.analitics}?ogrn=${ogrns}`),
+            sendRequest(`${API.analytics}?ogrn=${ogrns}`),
             sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
         ]);
         

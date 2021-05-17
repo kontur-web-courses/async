@@ -6,36 +6,27 @@ const API = {
 };
 
 async function run() {
-    const orgOgrns = await sendRequest(API.organizationList);
+    let orgOgrns
+    try {
+        orgOgrns = await sendRequest(API.organizationList);
+    }
+    catch (e) {
+        return;
+    }
     const ogrns = orgOgrns.join(',');
-    let requisites;
     try {
-        requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+        const [requisites, analytics, buh] = await Promise.all([
+            sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+            sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+            sendRequest(`${API.buhForms}?ogrn=${ogrns}`),
+        ]);
+        const orgsMap = reqsToMap(requisites);
+        addInOrgsMap(orgsMap, analytics, 'analytics');
+        addInOrgsMap(orgsMap, buh, 'buhForms');
+        render(orgsMap, orgOgrns);
     }
     catch (e) {
-        return;
     }
-    if (requisites === undefined)
-        return;
-    const orgsMap = reqsToMap(requisites);
-    let analytics;
-    try {
-        analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
-    }
-    catch (e) {
-        return;
-    }
-    console.log(analytics);
-    addInOrgsMap(orgsMap, analytics, 'analytics');
-    let buh;
-    try {
-        buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
-    }
-    catch (e) {
-        return;
-    }
-    addInOrgsMap(orgsMap, buh, 'buhForms');
-    render(orgsMap, orgOgrns);
 }
 
 run();

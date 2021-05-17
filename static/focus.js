@@ -5,37 +5,49 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
+async function run() {
+    try {
+        const orgOgrns = await sendRequest(API.organizationList);
         const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+        const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+        const orgsMap = reqsToMap(requisites);
+        const analytics = await sendRequest(`${API.analitics}?ogrn=${ogrns}`);
+        addInOrgsMap(orgsMap, analytics, "analytics");
+        const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+        addInOrgsMap(orgsMap, buh, "buhForms");
+        render(orgsMap, orgOgrns);
+    } catch(e) {
+        alert("Exception cought");
+    }
+    // await sendRequest(API.organizationList, (orgOgrns) => {
+    //     const ogrns = orgOgrns.join(",");
+    //     sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
+    //         const orgsMap = reqsToMap(requisites);
+    //         sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
+    //             addInOrgsMap(orgsMap, analytics, "analytics");
+    //             sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
+    //                 addInOrgsMap(orgsMap, buh, "buhForms");
+    //                 render(orgsMap, orgOgrns);
+    //             });
+    //         });
+    //     });
+    // });
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
+function sendRequest(url) {
+    let resp = fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                alert(response.status);
+                throw new Error(404);
             }
-        }
-    };
 
-    xhr.send();
+            return response;
+        })
+        .then(response => response.json())
+    return resp;
 }
 
 function reqsToMap(requisites) {

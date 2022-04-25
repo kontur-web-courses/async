@@ -47,34 +47,11 @@ async function run() {
 run();
 
 async function sendRequest(url) {
-/*
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
-*/
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
-
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    resolve(JSON.parse(xhr.response));
-                }
-            }
-        };
-        xhr.send();
-    });
+    let response = await fetch(url);
+    if(response.ok){
+        let json = await response.json();
+        return json;
+    }
 }
 
 function reqsToMap(requisites) {

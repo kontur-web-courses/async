@@ -5,38 +5,66 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    let orgOgrns = await sendRequest(API.organizationList);
+
+    const ogrns = orgOgrns.join(",");
+
+    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    let analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    let buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+
+    const promises = await Promise.all([requisites, analytics, buh])
+    const orgsMap = reqsToMap(promises[0]);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
+
+// function run() {
+//     sendRequest(API.organizationList, (orgOgrns) => {
+//         const ogrns = orgOgrns.join(",");
+//         sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
+//             const orgsMap = reqsToMap(requisites);
+//             sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
+//                 addInOrgsMap(orgsMap, analytics, "analytics");
+//                 sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
+//                     addInOrgsMap(orgsMap, buh, "buhForms");
+//                     render(orgsMap, orgOgrns);
+//                 });
+//             });
+//         });
+//     });
+// }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+async function sendRequest(url) {
+    const response = await fetch(url);
+    if (response.ok) {
+        return await response.json();
+    }
+    else {
+        alert(response.status);
+        throw new Error(response.status);
+    }
 }
+
+// function sendRequest(url, callback) {
+//     const xhr = new XMLHttpRequest();
+//     xhr.open("GET", url, true);
+//
+//     xhr.onreadystatechange = function () {
+//         if (xhr.readyState === XMLHttpRequest.DONE) {
+//             if (xhr.status === 200) {
+//                 callback(JSON.parse(xhr.response));
+//             }
+//         }
+//     };
+//
+//     xhr.send();
+// }
 
 function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {

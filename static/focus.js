@@ -6,29 +6,28 @@ const API = {
 };
 
 async function run() {
-    const orgOgrns = await sendRequest(API.organizationList);
+    let orgOgrns = await sendRequest(API.organizationList)
     const ogrns = orgOgrns.join(",");
-
-    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
-    const orgsMap = reqsToMap(requisites);
-
-    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
-    addInOrgsMap(orgsMap, analytics, "analytics");
-
-    const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
-    addInOrgsMap(orgsMap, buh, "buhForms");
-    render(orgsMap, orgOgrns);
+    await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    ]).then(([requisites, analytics, buh]) => {
+        const orgsMap = reqsToMap(requisites);
+        addInOrgsMap(orgsMap, buh, "buhForms");
+        addInOrgsMap(orgsMap, analytics, "analytics");
+        render(orgsMap, orgOgrns);
+    });
 }
 
 run();
 
-function sendRequest(url) {
-    return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url);
-        xhr.onload = () => resolve(JSON.parse(xhr.response));
-        xhr.send();
-    });
+async function sendRequest(url) {
+    const response = await fetch(url);
+    if (response.ok)
+        return await response.json();
+    if (response.status >= 300)
+        alert(response.status);
 }
 
 function reqsToMap(requisites) {

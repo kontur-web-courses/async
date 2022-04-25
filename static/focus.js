@@ -8,7 +8,8 @@ const API = {
 async function run() {
     const orgOgrns = await sendRequest(API.organizationList);
     const ogrns = orgOgrns.join(',');
-    const arr = await Promise.all([sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+    const arr = await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
         sendRequest(`${API.analytics}?ogrn=${ogrns}`),
         sendRequest(`${API.buhForms}?ogrn=${ogrns}`)])
     const orgsMap = reqsToMap(arr[0]);
@@ -21,12 +22,14 @@ run();
 
 async function sendRequest(url) {
     const response = await fetch(url);
-    rS = response.status;
-    if (rS >= 300) {
-        alert(rS);
-        return Promise.reject(rS);
+    respStatus = response.status;
+    if (respStatus >= 300) {
+        alert(respStatus);
+        return Promise.reject(respStatus);
     }
-    return response.json();
+    else {
+        return response.json();
+    }
 }
 
 function reqsToMap(requisites) {
@@ -77,7 +80,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

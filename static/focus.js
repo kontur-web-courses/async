@@ -14,13 +14,13 @@ async function run() {
     render(orgsMap, orgOgrns);
 }
 
-
 run();
 
 async function sendRequest(url) {
     const response = await fetch(url);
-    if (!response.ok) {
-        rS = response.status;
+    rS = response.status;
+    if (rS >= 300) {
+        alert(rS);
         return Promise.reject(rS);
     }
     return response.json();

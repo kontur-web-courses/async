@@ -5,8 +5,21 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
+async function run() {
+    await sendRequest(API.organizationList)
+        .then((orgOgrns) => {
+            let ogrns =  orgOgrns.join(",");
+            sendRequest(`${API.orgReqs}?ogrn=${ogrns}`)
+                .then((requisites) => {return reqsToMap(requisites)})
+                .then((orgsMap) => sendRequest(`${API.analytics}?ogrn=${ogrns}`)
+                    .then((analytics) => addInOrgsMap(orgsMap, analytics, "analytics"))
+                    .then(() => sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+                        .then((buh) => {
+                            addInOrgsMap(orgsMap, buh, "buhForms");
+                            render(orgsMap, orgOgrns);
+                        })))
+        });
+/*    sendRequest(API.organizationList, (orgOgrns) => {
         const ogrns = orgOgrns.join(",");
         sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
             const orgsMap = reqsToMap(requisites);
@@ -18,14 +31,16 @@ function run() {
                 });
             });
         });
-    });
+    });*/
 }
 
 run();
 
 function sendRequest(url, callback) {
+/*
     const xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);
+
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -36,6 +51,20 @@ function sendRequest(url, callback) {
     };
 
     xhr.send();
+*/
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    resolve(JSON.parse(xhr.response));
+                }
+            }
+        };
+        xhr.send();
+    });
 }
 
 function reqsToMap(requisites) {

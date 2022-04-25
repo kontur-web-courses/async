@@ -1,6 +1,6 @@
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analitics",
+    analytics: "/api3/analytics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
@@ -9,23 +9,28 @@ async function run() {
     let orgOgrns = await sendRequest(API.organizationList);
     const ogrns = orgOgrns.join(",");
 
-    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    const [requisites, analytics, buh] = await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    ]);
+
     const orgsMap = reqsToMap(requisites);
-
-    let analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
-
     addInOrgsMap(orgsMap, analytics, "analytics");
-    let buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
-
     addInOrgsMap(orgsMap, buh, "buhForms");
     render(orgsMap, orgOgrns);
 }
 
-run().catch(console.error);
+run().catch(err => console.log(err));
 
 async function sendRequest(url) {
-    return fetch(url).then(response => {
-        return response.json();
+    return fetch(url).then(async response => {
+        if (response.status >= 300) {
+            alert(`${response.status} ${response.statusText}`);
+            return Promise.resolve(null);
+        } else {
+            return response.json();
+        }
     });
 }
 

@@ -9,12 +9,15 @@ async function run() {
     const orgOgrns = await sendRequest(API.organizationList);
     if (orgOgrns === undefined) return;
     const ogrns = orgOgrns.join(",");
-    const responses = await Promise.all([API.orgReqs, API.analytics, API.buhForms].map(url => sendRequest(`${url}?ogrn=${ogrns}`)));
-    if (responses.some(response => response === undefined)) return;
-    const orgsMap = reqsToMap(responses[0]);
-    addInOrgsMap(orgsMap, responses[1], "analytics");
-    addInOrgsMap(orgsMap, responses[2], "buhForms");
-    render(orgsMap, orgOgrns);
+    await Promise.all([API.orgReqs, API.analytics, API.buhForms]
+        .map(url => sendRequest(`${url}?ogrn=${ogrns}`)))
+        .then(([requisites, analyticsInfo, buhFormsInfo]) => {
+            if ([requisites, analyticsInfo, buhFormsInfo].some(response => response === undefined)) return;
+            const orgsMap = reqsToMap(requisites);
+            addInOrgsMap(orgsMap, analyticsInfo, "analytics");
+            addInOrgsMap(orgsMap, buhFormsInfo, "buhForms");
+            render(orgsMap, orgOgrns);
+        });
 }
 
 run();

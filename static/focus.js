@@ -27,7 +27,8 @@ async function sendRequest(url) {
     const response = await fetch(url);
     if (response.ok)
         return await response.json();
-    alert(response.status);
+    if (response.status >= 300)
+        alert(response.status);
 }
 
 function reqsToMap(requisites) {

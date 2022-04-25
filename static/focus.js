@@ -6,7 +6,7 @@ const API = {
 };
 
 async function run() {
-    await sendRequest(API.organizationList)
+/*    await sendRequest(API.organizationList)
         .then((orgOgrns) => {
             let ogrns =  orgOgrns.join(",");
             sendRequest(`${API.orgReqs}?ogrn=${ogrns}`)
@@ -18,7 +18,17 @@ async function run() {
                             addInOrgsMap(orgsMap, buh, "buhForms");
                             render(orgsMap, orgOgrns);
                         })))
-        });
+        });*/
+
+    const orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(',');
+    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    const orgsMap = reqsToMap(requisites);
+    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 /*    sendRequest(API.organizationList, (orgOgrns) => {
         const ogrns = orgOgrns.join(",");
         sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
@@ -36,7 +46,7 @@ async function run() {
 
 run();
 
-function sendRequest(url, callback) {
+async function sendRequest(url) {
 /*
     const xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);

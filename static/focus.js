@@ -9,25 +9,21 @@ const API = {
 };
 
 async function run() {
-
-    await sendRequest(API.organizationList, async (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, async (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            await sendRequest(`${API.analytics}?ogrn=${ogrns}`, async (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                await sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+    let orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    //const requisites = sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    const orgsMap = reqsToMap(requisites);
+    let analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    let buh =  await sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
 //перписать так, чтобы она возвращала промис. А в функции `run` жди их при помощи async/await.
-async function sendRequest (url, callback) {
+async function sendRequest (url){//}, callback) {
     
     return fetch(url)  
     .then(  
@@ -39,7 +35,7 @@ async function sendRequest (url, callback) {
                 alert(`${response.status} ${response.statusText}`);
                 return;
             }
-          }).then(res => callback(res))    
+          });//.then(res => callback(res))    
     // ).catch(err => alert(`${err}`));  
 }
 

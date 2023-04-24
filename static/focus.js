@@ -20,25 +20,14 @@ async function run() {
 
 run();
 
-function sendRequest(url) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("GET", url, true);
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-          if (xhr.status === 200) {
-            resolve(JSON.parse(xhr.response));
-          } else {
-            reject(xhr.statusText);
-          }
-        }
-      };
-      xhr.onerror = function () {
-        reject("Network error");
-      };
-      xhr.send();
-    });
+async function sendRequest(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    }
+    return await response.json();
   }
+  
 
 function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {

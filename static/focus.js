@@ -5,37 +5,28 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    let orgOgres = await sendRequest(API.organizationList);
+    const ogres = orgOgres.join(",");
+    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogres}`);
+    let analytics = await sendRequest(`${API.analytics}?ogrn=${ogres}`);
+    let buh = await sendRequest(`${API.buhForms}?ogrn=${ogres}`);
+    const promAll = await Promise.all([requisites, analytics, buh])
+    const orgsMap = reqsToMap(promAll[0]);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgres);
 }
+(async () => await run())();
 
-run();
-
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+async function sendRequest(url) {
+    const response = await fetch(url);
+    if (response.ok) {
+        return response.json();
+    } else {
+        alert(`Ошибка № ${response.status}`);
+        return Promise.reject(response.status);
+    }
 }
 
 function reqsToMap(requisites) {
@@ -69,12 +60,10 @@ function renderOrganization(orgInfo, template, container) {
     const indebtedness = clone.querySelector(".indebtedness");
     const money = clone.querySelector(".money");
     const address = clone.querySelector(".address");
-
     name.textContent =
         (orgInfo.UL && orgInfo.UL.legalName && orgInfo.UL.legalName.short) ||
         "";
     indebtedness.textContent = formatMoney(orgInfo.analytics.s1002 || 0);
-
     if (
         orgInfo.buhForms &&
         orgInfo.buhForms.length &&
@@ -86,16 +75,17 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+
+            0
         );
     } else {
         money.textContent = "—";
+
+        const addressFromServer = orgInfo.UL.legalAddress.parsedAddressRF;
+        address.textContent = createAddress(addressFromServer);
+
+        container.appendChild(clone);
     }
-
-    const addressFromServer = orgInfo.UL.legalAddress.parsedAddressRF;
-    address.textContent = createAddress(addressFromServer);
-
-    container.appendChild(clone);
 }
 
 function formatMoney(money) {
@@ -125,9 +115,7 @@ function createAddress(address) {
     if (address.house) {
         addressToRender.push(createAddressItem("house"));
     }
-
     return addressToRender.join(", ");
-
     function createAddressItem(key) {
         return `${address[key].topoShortName}. ${address[key].topoValue}`;
     }

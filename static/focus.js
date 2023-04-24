@@ -12,26 +12,37 @@ async function run() {
     const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
     addInOrgsMap(orgsMap, buh, "buhForms");
     render(orgsMap, orgOgrns);
+
 }
 
 run();
 
-function sendRequest(url, callback) {
-    return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
+async function sendRequest(url, callback) {
+    // return new Promise((resolve) => {
+    //     const xhr = new XMLHttpRequest();
+    //     xhr.open("GET", url, true);
+    //
+    //     xhr.onreadystatechange = function () {
+    //         if (xhr.readyState === XMLHttpRequest.DONE) {
+    //             if (xhr.status === 200) {
+    //                 resolve(JSON.parse(xhr.response));
+    //             }
+    //         }
+    //     };
+    //
+    //     xhr.send();
+    //
+    // });
 
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    resolve(JSON.parse(xhr.response));
-                }
-            }
-        };
 
-        xhr.send();
+    const resp = fetch(url);
 
-    });
+    if (resp.ok) {
+        return await resp.json();
+    }
+    else{
+        return Promise.reject(resp.status);
+    }
 }
 
 function reqsToMap(requisites) {

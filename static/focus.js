@@ -5,38 +5,83 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    const orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+
+    let [requisites, analytics, buh] = await Promise.all(
+        [sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+            sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+            sendRequest(`${API.buhForms}?ogrn=${ogrns}`)]);
+
+    // const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    const orgsMap = reqsToMap(requisites);
+    // const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    // const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
+    // await Promise.all([requisites, analytics, buh])
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
+async function sendRequest(url, callback) {
+    let response = await fetch(url);
+    if (response.ok) {
+        return await response.json();
+    } else {
+        alert("Ошибка HTTP: " + response.status + " " + response.statusText);
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+    }
+    // return new Promise(function (resolve, reject) {
+    //     const xhr = new XMLHttpRequest();
+    //     xhr.open("GET", url, true);
+    //
+    //     xhr.onreadystatechange = function () {
+    //         if (xhr.readyState === XMLHttpRequest.DONE) {
+    //             if (xhr.status === 200) {
+    //                 callback(JSON.parse(xhr.response));
+    //             }
+    //         }
+    //     };
+    //
+    //     xhr.send();
+    // });
 }
+
+// function sendRequest(url, callback) {
+//     return new Promise(function (resolve, reject) {
+//         const xhr = new XMLHttpRequest();
+//         xhr.open("GET", url, true);
+//
+//         xhr.onreadystatechange = function () {
+//             if (xhr.readyState === XMLHttpRequest.DONE) {
+//                 if (xhr.status === 200) {
+//                     callback(JSON.parse(xhr.response));
+//                 }
+//             }
+//         };
+//
+//         xhr.send();
+//     });
+// }
+
+// function sendRequest(url, callback) {
+//     const xhr = new XMLHttpRequest();
+//     xhr.open("GET", url, true);
+//
+//     xhr.onreadystatechange = function () {
+//         if (xhr.readyState === XMLHttpRequest.DONE) {
+//             if (xhr.status === 200) {
+//                 callback(JSON.parse(xhr.response));
+//             }
+//         }
+//     };
+//
+//     xhr.send();
+// }
+
 
 function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {

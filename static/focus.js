@@ -1,18 +1,22 @@
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analitics",
+    analytics: "/api3/analytics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
 
 async function run() {
-    const orgOgrns = (await sendRequest(API.organizationList)); 
+    const orgOgrns = await sendRequest(API.organizationList); 
     const ogrns = orgOgrns.join(",");
-    const requisites = (await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`));
+
+    const [requisites, analytics, buh] = await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    ]);
+
     let orgsMap = reqsToMap(requisites);
-    const analytics = (await sendRequest(`${API.analytics}?ogrn=${ogrns}`));
     addInOrgsMap(orgsMap, analytics, "analytics");
-    const buh = (await sendRequest(`${API.buhForms}?ogrn=${ogrns}`));
     addInOrgsMap(orgsMap, buh, "buhForms");
     render(orgsMap, orgOgrns);
 }

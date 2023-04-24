@@ -35,7 +35,7 @@ async function sendRequest(url, callback) {
     // });
 
 
-    const resp = fetch(url);
+    const resp = await fetch(url);
 
     if (resp.ok) {
         return await resp.json();

@@ -26,7 +26,7 @@ async function sendRequest(url) {
         throw new Error(response.statusText);
     }
     return await response.json();
-  }
+}
   
 
 function reqsToMap(requisites) {

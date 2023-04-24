@@ -24,18 +24,22 @@ function run() {
 run();
 
 function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
+    return new Promise(resolve => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    callback(JSON.parse(xhr.response));
+                }
             }
-        }
-    };
+        };
 
-    xhr.send();
+        xhr.send();
+        resolve();
+    })
+
 }
 
 function reqsToMap(requisites) {

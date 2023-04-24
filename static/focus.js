@@ -1,5 +1,5 @@
-const { response } = require("express");
-const { json } = require("express/lib/response");
+// const { response } = require("express");
+// const { json } = require("express/lib/response");
 
 const API = {
     organizationList: "/orgsList",
@@ -31,20 +31,23 @@ run();
 //перписать так, чтобы она возвращала промис. А в функции `run` жди их при помощи async/await.
 async function sendRequest (url, callback) {
     
-    // return fetch(url)  
-    // .then(  
-    //     response => {  
-    //         if (response.ok) {
-    //             //callback(response.json()) ; 
-    //             //return callback(JSON.parse(response));
-    //             //return callback(response.json());
-    //             return response.json();
-    //         }
-    //         else{
-    //             alert(`${response.status} ${response.statusText}`);
-    //             return;
-    //         }
-    //       }    
+    return fetch(url)  
+    .then(  
+        (response) => {
+            if (response.ok) {
+                // console.log(response)
+                //callback(response.json()) ; 
+                // callback(JSON.parse(response.body));
+                //return callback(response.json());
+                // console.log(response.json())
+                // callback(response.json());
+                return response.json()
+            }
+            else{
+                alert(`${response.status} ${response.statusText}`);
+                return;
+            }
+          }).then(res => callback(res))    
     // ).catch(err => alert(`${err}`));
 
   
@@ -55,6 +58,7 @@ async function sendRequest (url, callback) {
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
+                    console.log(JSON.parse(xhr.response));
                     callback(JSON.parse(xhr.response));
                 }
             }

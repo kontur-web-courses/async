@@ -1,27 +1,39 @@
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analytics",
+    analytics: "/api3/analitics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
 
 async function run() {
-    const orgOgrns = await sendRequest(API.organizationList).catch(x => console.log(x));
+    const orgOgrns = await sendRequest(API.organizationList).catch(x => alert(x));
     const ogrns = orgOgrns.join(",");
-    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`).catch(x => console.log(x));
-    const orgsMap = reqsToMap(requisites);
-    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`).catch(x => console.log(x));
-    addInOrgsMap(orgsMap, analytics, "analytics");
-    const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`).catch(x => console.log(x));
-    addInOrgsMap(orgsMap, buh, "buhForms");
-    render(orgsMap, orgOgrns);
+    await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)])
+        .then(x => {
+            const [requisites, analytics, buh] = x;
+            const orgsMap = reqsToMap(requisites);
+            addInOrgsMap(orgsMap, analytics, "analytics");
+            addInOrgsMap(orgsMap, buh, "buhForms");
+            render(orgsMap, orgOgrns);
+        })
+        .catch(x => alert(x));
+
 }
 
 run();
 
 
 async function sendRequest(url) {
-    return fetch(url).catch(x => console.error(x)).then(x => x.json());
+    return await fetch(url)
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error(response.status + " " + response.statusText);
+        });
 }
 
 

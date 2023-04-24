@@ -9,9 +9,7 @@ const API = {
 };
 
 async function run() {
-    //const asyncFunction = async () => {
-        // Код
-    //  }
+
     await sendRequest(API.organizationList, async (orgOgrns) => {
         const ogrns = orgOgrns.join(",");
         await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, async (requisites) => {
@@ -35,12 +33,6 @@ async function sendRequest (url, callback) {
     .then(  
         (response) => {
             if (response.ok) {
-                // console.log(response)
-                //callback(response.json()) ; 
-                // callback(JSON.parse(response.body));
-                //return callback(response.json());
-                // console.log(response.json())
-                // callback(response.json());
                 return response.json()
             }
             else{
@@ -48,25 +40,7 @@ async function sendRequest (url, callback) {
                 return;
             }
           }).then(res => callback(res))    
-    // ).catch(err => alert(`${err}`));
-
-  
-
-    return new Promise(() => { 
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    console.log(JSON.parse(xhr.response));
-                    callback(JSON.parse(xhr.response));
-                }
-            }
-        };
-    
-        xhr.send();
-    });  
-    
+    // ).catch(err => alert(`${err}`));  
 }
 
 function reqsToMap(requisites) {

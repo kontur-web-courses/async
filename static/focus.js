@@ -5,7 +5,7 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-async function run() {
+/*async function run() {
     await sendRequest(API.organizationList, (orgOgrns) => {
         const ogrns = orgOgrns.join(",");
         sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
@@ -19,11 +19,24 @@ async function run() {
             });
         });
     });
+}*/
+
+async function run() {
+    let orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+    let requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    let analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    let buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    const promises = await Promise.all([requisites, analytics, buh])
+    const orgsMap = reqsToMap(promises[0]);
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
 
-function sendRequest(url, callback) {
+/*function sendRequest(url, callback) {
     return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open("GET", url, true);
@@ -40,6 +53,16 @@ function sendRequest(url, callback) {
             xhr.send();
         }
     );
+}*/
+
+function sendRequest(url) {
+    return fetch(url).then(response => {
+        if (response.ok)
+            return response.json();
+        else
+            alert(response.status);
+            throw(`${response.statusText}`);
+    });
 }
 
 function reqsToMap(requisites) {

@@ -6,20 +6,17 @@ const API = {
 };
 
 async function run() {
-    try {
-      const orgOgrns = await sendRequest(API.organizationList);
-      const ogrns = orgOgrns.join(",");
-      const requisites = await sendRequest(`\${API.orgReqs}?ogrn=\${ogrns}`);
-      const orgsMap = reqsToMap(requisites);
-      const analytics = await sendRequest(`\${API.analytics}?ogrn=\${ogrns}`);
-      addInOrgsMap(orgsMap, analytics, "analytics");
-      const buh = await sendRequest(`\${API.buhForms}?ogrn=\${ogrns}`);
-      addInOrgsMap(orgsMap, buh, "buhForms");
-      render(orgsMap, orgOgrns);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+    const orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    const buh = await  sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    const orgsMap = reqsToMap(requisites);
+
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
+}
 
 run();
 

@@ -20,7 +20,6 @@ async function run() {
             render(orgsMap, orgOgrns);
         })
         .catch(x => alert(x));
-
 }
 
 run();

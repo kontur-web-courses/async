@@ -1,3 +1,6 @@
+const { response } = require("express");
+const { json } = require("express/lib/response");
+
 const API = {
     organizationList: "/orgsList",
     analytics: "/api3/analytics",
@@ -5,14 +8,17 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
+async function run() {
+    //const asyncFunction = async () => {
+        // Код
+    //  }
+    await sendRequest(API.organizationList, async (orgOgrns) => {
         const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
+        await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, async (requisites) => {
             const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
+            await sendRequest(`${API.analytics}?ogrn=${ogrns}`, async (analytics) => {
                 addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
+                await sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
                     addInOrgsMap(orgsMap, buh, "buhForms");
                     render(orgsMap, orgOgrns);
                 });
@@ -22,20 +28,41 @@ function run() {
 }
 
 run();
+//перписать так, чтобы она возвращала промис. А в функции `run` жди их при помощи async/await.
+async function sendRequest (url, callback) {
+    
+    // return fetch(url)  
+    // .then(  
+    //     response => {  
+    //         if (response.ok) {
+    //             //callback(response.json()) ; 
+    //             //return callback(JSON.parse(response));
+    //             //return callback(response.json());
+    //             return response.json();
+    //         }
+    //         else{
+    //             alert(`${response.status} ${response.statusText}`);
+    //             return;
+    //         }
+    //       }    
+    // ).catch(err => alert(`${err}`));
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
+  
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
+    return new Promise(() => { 
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    callback(JSON.parse(xhr.response));
+                }
             }
-        }
-    };
-
-    xhr.send();
+        };
+    
+        xhr.send();
+    });  
+    
 }
 
 function reqsToMap(requisites) {

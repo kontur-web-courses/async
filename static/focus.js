@@ -5,37 +5,51 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    let orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+
+    let [requisites, analytics, buh] =
+        await Promise.all([sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+            sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+            sendRequest(`${API.buhForms}?ogrn=${ogrns}`)]);
+
+    const orgsMap = reqsToMap(requisites);
+
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
+// async function sendRequest(url) {
+//     return new Promise((resolve, reject) =>
+//     {
+//         const xhr = new XMLHttpRequest();
+//         xhr.open("GET", url, true);
+//
+//         xhr.onreadystatechange = function () {
+//             if (xhr.readyState === XMLHttpRequest.DONE) {
+//                 if (xhr.status === 200) {
+//                     resolve(JSON.parse(xhr.response));
+//                 }
+//             }
+//         };
+//
+//         xhr.send();
+//     });
+// }
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
+async function sendRequest(url) {
+    let response = await fetch(url);
 
-    xhr.send();
+    if (response.ok) {
+        return await response.json();
+    }
+    else {
+        alert(`${response.status} ${response.statusText}`);
+    }
 }
 
 function reqsToMap(requisites) {

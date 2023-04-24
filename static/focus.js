@@ -1,7 +1,6 @@
 const API = {
     organizationList: "/orgsList",
-    analytics: "/api3/analytics",
-    orgReqs: "/api3/reqBase",
+    analytics: "/api3/analytics", orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
 
@@ -22,26 +21,15 @@ async function run() {
 
 run();
 
-// function sendRequest(url, callback) {
-//     return new Promise(resolve => {
-//         const xhr = new XMLHttpRequest();
-//         xhr.open("GET", url, true);
-//
-//         xhr.onreadystatechange = function () {
-//             if (xhr.readyState === XMLHttpRequest.DONE) {
-//                 if (xhr.status === 200) {
-//                     callback(JSON.parse(xhr.response));
-//                 }
-//             }
-//         };
-//         xhr.send();
-//         resolve();
-//     })
-// }
-
-
-function sendRequest(url) {
-    return fetch(url).then(response => response.json());
+function sendRequest(url, callback) {
+    return fetch(url).then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            alert(`${response.status} ${response.statusText}`);
+            return Promise.reject();
+        }
+    });
 }
 
 function reqsToMap(requisites) {
@@ -60,10 +48,8 @@ function addInOrgsMap(orgsMap, additionalInfo, key) {
 function render(organizationsInfo, organizationsOrder) {
     const table = document.getElementById("organizations");
     table.classList.remove("hide");
-
     const template = document.getElementById("orgTemplate");
     const container = table.querySelector("tbody");
-
     organizationsOrder.forEach((item) => {
         renderOrganization(organizationsInfo[item], template, container);
     });
@@ -75,45 +61,32 @@ function renderOrganization(orgInfo, template, container) {
     const indebtedness = clone.querySelector(".indebtedness");
     const money = clone.querySelector(".money");
     const address = clone.querySelector(".address");
-
     name.textContent =
-        (orgInfo.UL && orgInfo.UL.legalName && orgInfo.UL.legalName.short) ||
-        "";
+        (orgInfo.UL && orgInfo.UL.legalName && orgInfo.UL.legalName.short) || "";
     indebtedness.textContent = formatMoney(orgInfo.analytics.s1002 || 0);
-
-    if (
-        orgInfo.buhForms &&
-        orgInfo.buhForms.length &&
-        orgInfo.buhForms[orgInfo.buhForms.length - 1] &&
-        orgInfo.buhForms[orgInfo.buhForms.length - 1].year === 2017
-    ) {
-        money.textContent = formatMoney(
-            (orgInfo.buhForms[orgInfo.buhForms.length - 1].form2 &&
-                orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
-                orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
-                    .endValue) ||
-            0
+    if (orgInfo.buhForms &&
+        orgInfo.buhForms.length && orgInfo.buhForms[orgInfo.buhForms.length - 1] &&
+        orgInfo.buhForms[orgInfo.buhForms.length - 1].year === 2017) {
+        money.textContent = formatMoney((orgInfo.buhForms[orgInfo.buhForms.length - 1].form2 &&
+            orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] && orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
+                .endValue) || 0
         );
     } else {
         money.textContent = "—";
     }
-
     const addressFromServer = orgInfo.UL.legalAddress.parsedAddressRF;
     address.textContent = createAddress(addressFromServer);
-
     container.appendChild(clone);
 }
 
 function formatMoney(money) {
     let formatted = money.toFixed(2);
     formatted = formatted.replace(".", ",");
-
     const rounded = money.toFixed(0);
     const numLen = rounded.length;
     for (let i = numLen - 3; i > 0; i -= 3) {
         formatted = `${formatted.slice(0, i)} ${formatted.slice(i)}`;
     }
-
     return `${formatted} ₽`;
 }
 
@@ -131,7 +104,6 @@ function createAddress(address) {
     if (address.house) {
         addressToRender.push(createAddressItem("house"));
     }
-
     return addressToRender.join(", ");
 
     function createAddressItem(key) {

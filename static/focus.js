@@ -23,7 +23,7 @@ run();
 async function sendRequest(url) {
     const response = await fetch(url);
     if (!response.ok) {
-        throw new Error(response.statusText);
+        alert(`${response.status}: ${response.statusText}`);
     }
     return await response.json();
 }

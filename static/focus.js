@@ -5,37 +5,31 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    let orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(",");
+    let pr = await Promise.all([sendRequest(`${API.orgReqs}?ogrn=${ogrns}`), await sendRequest(`${API.analytics}?ogrn=${ogrns}`), await sendRequest(`${API.buhForms}?ogrn=${ogrns}`)])
+    let requisites = pr[0];
+    const orgsMap = reqsToMap(requisites);
+    let analytics = pr[1];
+    addInOrgsMap(orgsMap, analytics, "analytics");
+    let buh = pr[2];
+    addInOrgsMap(orgsMap, buh, "buhForms");
+    render(orgsMap, orgOgrns);
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
+async function sendRequest(url, callback) {
+    return fetch(url)
+        .then(function (response) {
+            if (!response.ok) {
+                throw Error(response.statusText);
             }
-        }
-    };
-
-    xhr.send();
+            return response.json();
+        }).catch(function (error) {
+            alert("Произошла ошибка");
+        });
 }
 
 function reqsToMap(requisites) {
@@ -86,7 +80,7 @@ function renderOrganization(orgInfo, template, container) {
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
                 orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
                     .endValue) ||
-                0
+            0
         );
     } else {
         money.textContent = "—";

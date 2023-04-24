@@ -1,41 +1,55 @@
+const { response } = require("express");
+
 const API = {
     organizationList: "/orgsList",
     analytics: "/api3/analytics",
     orgReqs: "/api3/reqBase",
     buhForms: "/api3/buh",
 };
-
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+ 
+async function run() {
+    var promiseArr = [sendRequest(API.organizationList, (orgOgrns)), 
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites)), 
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics)), 
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh))]
+    
+    await Promise.all(promiseArr).then(responses => {
+        const orgsMap = reqsToMap(responses[0]);
+        addInOrgsMap(orgsMap, responses[2], "analytics");
+        addInOrgsMap(orgsMap, responses[3], "buhForms");
+        render(orgsMap, responsesimage.png[0].join(','));
+    })
 }
 
 run();
 
 function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
+    return new Promise((resolve, reject) =>{
+        fetch(url, { method: 'GET' })
+        .then((response) => {
+            if (!response.ok) {
+              throw new Error(response.statusText)
             }
-        }
-    };
-
-    xhr.send();
+            response.json()
+            resolve
+          })
+        .catch(reject);
+        // const xhr = new XMLHttpRequest();
+        // xhr.open("GET", url, true);
+        
+        // xhr.onreadystatechange = function () {
+        //     if (xhr.readyState === XMLHttpRequest.DONE) {
+        //         if (xhr.status === 200) {
+        //             callback(JSON.parse(xhr.response));
+        //             resolve(xhr.response);
+        //         }
+        //         else{
+        //             reject(xhr.statusText);
+        //         }
+        //     }
+        // };
+        // xhr.send();
+    });
 }
 
 function reqsToMap(requisites) {

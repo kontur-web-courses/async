@@ -31,6 +31,21 @@ async function sendRequest(url) {
     });
 }
 
+/*
+function sendRequest(url, callback) {
+    return new Promise((resolve, reject) =>{
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function ()
+        {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) return resolve(JSON.parse(xhr.response));
+            }
+        }
+        xhr.send();
+    })
+}
+*/
 function reqsToMap(requisites) {
     return requisites.reduce((acc, item) => {
         acc[item.ogrn] = item;

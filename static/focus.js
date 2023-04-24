@@ -17,14 +17,14 @@ async function run() {
 run();
 
 function sendRequest(url, callback) {
-    return new Promise(() => {
+    return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url, true);
 
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
-                    callback(JSON.parse(xhr.response));
+                    resolve(JSON.parse(xhr.response));
                 }
             }
         };

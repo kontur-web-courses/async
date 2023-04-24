@@ -3,15 +3,33 @@ const API = {
 };
 
 async function run() {
+    // try {
+    //     const orgOgrns = await sendRequest(API.organizationList);
+    //     const ogrns = orgOgrns.join(",");
+    //     const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
+    //     const orgsMap = reqsToMap(requisites);
+    //     const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
+    //     addInOrgsMap(orgsMap, analytics, "analytics");
+    //     const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
+    //     addInOrgsMap(orgsMap, buh, "buhForms");
+    //     render(orgsMap, orgOgrns);
+    // } catch(exception) {
+    //     alert(exception.message());
+    // }
+
     const orgOgrns = await sendRequest(API.organizationList);
-    const ogrns = orgOgrns.join(",");
-    const requisites = await sendRequest(`${API.orgReqs}?ogrn=${ogrns}`);
-    const orgsMap = reqsToMap(requisites);
-    const analytics = await sendRequest(`${API.analytics}?ogrn=${ogrns}`);
-    addInOrgsMap(orgsMap, analytics, "analytics");
-    const buh = await sendRequest(`${API.buhForms}?ogrn=${ogrns}`);
-    addInOrgsMap(orgsMap, buh, "buhForms");
-    render(orgsMap, orgOgrns);
+    const ogrns = orgOgrns.join(',');
+
+    await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    ]).then(([requisites, analytics, buh]) => {
+        const orgsMap = reqsToMap(requisites);
+        addInOrgsMap(orgsMap, analytics, 'analytics');
+        addInOrgsMap(orgsMap, buh, 'buhForms');
+        render(orgsMap, orgOgrns);
+    })
 
 }
 
@@ -39,10 +57,11 @@ async function sendRequest(url, callback) {
 
     if (resp.ok) {
         return await resp.json();
+    } else {
+        alert("Ошибка: " + resp.status);
+        return new Error(`${resp.status}`);
     }
-    else{
-        return Promise.reject(resp.status);
-    }
+
 }
 
 function reqsToMap(requisites) {

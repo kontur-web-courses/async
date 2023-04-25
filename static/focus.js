@@ -5,37 +5,31 @@ const API = {
     buhForms: "/api3/buh",
 };
 
-function run() {
-    sendRequest(API.organizationList, (orgOgrns) => {
-        const ogrns = orgOgrns.join(",");
-        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`, (requisites) => {
-            const orgsMap = reqsToMap(requisites);
-            sendRequest(`${API.analytics}?ogrn=${ogrns}`, (analytics) => {
-                addInOrgsMap(orgsMap, analytics, "analytics");
-                sendRequest(`${API.buhForms}?ogrn=${ogrns}`, (buh) => {
-                    addInOrgsMap(orgsMap, buh, "buhForms");
-                    render(orgsMap, orgOgrns);
-                });
-            });
-        });
-    });
+async function run() {
+    const orgOgrns = await sendRequest(API.organizationList);
+    const ogrns = orgOgrns.join(',');
+
+    await Promise.all([
+        sendRequest(`${API.orgReqs}?ogrn=${ogrns}`),
+        sendRequest(`${API.analytics}?ogrn=${ogrns}`),
+        sendRequest(`${API.buhForms}?ogrn=${ogrns}`)
+    ]).then(([requisites, analytics, buh]) => {
+        const orgsMap = reqsToMap(requisites);
+        addInOrgsMap(orgsMap, analytics, 'analytics');
+        addInOrgsMap(orgsMap, buh, 'buhForms');
+        render(orgsMap, orgOgrns);
+    })
 }
 
 run();
 
-function sendRequest(url, callback) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                callback(JSON.parse(xhr.response));
-            }
-        }
-    };
-
-    xhr.send();
+async function sendRequest(url, callback) {
+    const resp = await fetch(url);
+    if (resp.ok) {
+        return await resp.json();
+    }
+    alert(`Ошибка: ${resp.status}, код: ${resp.statusCode}`);
+    return new Error(`${resp.status}`);
 }
 
 function reqsToMap(requisites) {
@@ -70,24 +64,11 @@ function renderOrganization(orgInfo, template, container) {
     const money = clone.querySelector(".money");
     const address = clone.querySelector(".address");
 
-    name.textContent =
-        (orgInfo.UL && orgInfo.UL.legalName && orgInfo.UL.legalName.short) ||
-        "";
+    name.textContent = (orgInfo.UL && orgInfo.UL.legalName && orgInfo.UL.legalName.short) || "";
     indebtedness.textContent = formatMoney(orgInfo.analytics.s1002 || 0);
 
-    if (
-        orgInfo.buhForms &&
-        orgInfo.buhForms.length &&
-        orgInfo.buhForms[orgInfo.buhForms.length - 1] &&
-        orgInfo.buhForms[orgInfo.buhForms.length - 1].year === 2017
-    ) {
-        money.textContent = formatMoney(
-            (orgInfo.buhForms[orgInfo.buhForms.length - 1].form2 &&
-                orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] &&
-                orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0]
-                    .endValue) ||
-                0
-        );
+    if (orgInfo.buhForms && orgInfo.buhForms.length && orgInfo.buhForms[orgInfo.buhForms.length - 1] && orgInfo.buhForms[orgInfo.buhForms.length - 1].year === 2017) {
+        money.textContent = formatMoney((orgInfo.buhForms[orgInfo.buhForms.length - 1].form2 && orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0] && orgInfo.buhForms[orgInfo.buhForms.length - 1].form2[0].endValue) || 0);
     } else {
         money.textContent = "—";
     }
